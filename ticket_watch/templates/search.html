@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ q ~ ' games' if q else 'Find games' }} | Ticket Watch{% endblock %}
+{% block content %}
+<h1>Find games</h1>
+
+<form method="get" action="/search" style="display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-bottom:26px">
+  <label class="field" style="flex:1 1 260px">Team or performer
+    <input name="q" value="{{ q }}" placeholder="Knicks, Yankees, Olivia Rodrigo" required {% if not q %}autofocus{% endif %} style="font-size:18px; padding:12px 14px">
+  </label>
+  <label class="field">From<input type="date" name="date_from" value="{{ date_from }}"></label>
+  <label class="field">To<input type="date" name="date_to" value="{{ date_to }}"></label>
+  <button class="btn primary" style="padding:14px 20px">Search</button>
+</form>
+
+{% for label, err in errors.items() %}<p class="note problem"><strong>{{ label }}</strong> {{ err }}</p>{% endfor %}
+
+{% if q %}
+<article class="ticket">
+  <form class="ticket-body" method="post" action="/watches">
+    <h2 style="font:700 28px/1.05 var(--display); margin:0 0 6px">Watch every {{ q }} game</h2>
+    <p style="margin:0 0 18px; color:var(--ink-soft)">
+      {% if date_from or date_to %}From {{ date_from|shortdate if date_from else 'today' }} to {{ date_to|shortdate if date_to else 'the end of the season' }}{% else %}All upcoming games{% endif %}, on every connected marketplace. New games are added as they're announced.
+    </p>
+    <input type="hidden" name="query" value="{{ q }}">
+    <input type="hidden" name="date_from" value="{{ date_from }}">
+    <input type="hidden" name="date_to" value="{{ date_to }}">
+    <div style="display:flex; gap:14px; align-items:end; flex-wrap:wrap">
+      <label class="field">Alert at or below
+        <input type="number" name="target_price" min="1" step="1" required placeholder="$ per ticket" style="width:140px">
+      </label>
+      <label class="field">Tickets<input type="number" name="quantity" value="1" min="1" max="12" style="width:80px"></label>
+      <label class="field">Venue name<input name="venue_name" placeholder="Any venue" style="width:180px"></label>
+      <label class="check"><input type="checkbox" name="home_only" value="true"> Home games only</label>
+      <button class="btn primary">Create watch</button>
+    </div>
+  </form>
+  <aside class="ticket-stub" aria-hidden="true">
+    <div><div class="stub-price">{{ games|length }}</div>
+    <div class="stub-caption">game{{ '' if games|length == 1 else 's' }} found</div></div>
+  </aside>
+</article>
+
+{% if games %}
+<div class="scroll" style="background:var(--stock); border-radius:var(--radius); padding:6px 20px">
+<table class="games">
+  {% for g in games %}
+  <tr>
+    <td><div class="date"><span class="d">{{ g.starts_at|day }}</span><span class="m">{{ g.starts_at|mon }}</span><span class="w">{{ g.starts_at|dow }} {{ g.starts_at|clock }}</span></div></td>
+    <td><div class="matchup">{{ g.event.title }}</div><div class="venue">{{ g.event.venue_name }}, {{ g.event.city }}</div></td>
+    {% for p in providers %}
+      {% set e = g.offers.get(p.label) %}
+      {% if e and e.lowest_price is not none %}
+      <td class="price"><a href="{{ e.url }}" target="_blank" rel="noopener">${{ '%.0f'|format(e.lowest_price) }}</a><span class="via">{{ p.label }}</span></td>
+      {% elif e %}
+      <td class="price none"><a href="{{ e.url }}" target="_blank" rel="noopener">No price</a><span class="via">{{ p.label }}</span></td>
+      {% else %}
+      <td class="price none">Not listed<span class="via">{{ p.label }}</span></td>
+      {% endif %}
+    {% endfor %}
+    <td class="row-action" style="width:1%">
+      <form method="post" action="/watches" style="display:flex; gap:6px; justify-content:flex-end">
+        <input type="hidden" name="query" value="{{ q }}">
+        <input type="hidden" name="date_from" value="{{ g.starts_at.date().isoformat() }}">
+        <input type="hidden" name="date_to" value="{{ g.starts_at.date().isoformat() }}">
+        <input type="hidden" name="venue_name" value="{{ g.event.venue_name }}">
+        <input type="number" name="target_price" min="1" step="1" placeholder="$" required aria-label="Target price for this game" style="width:76px">
+        <button class="btn">Watch</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% else %}
+<p class="empty">No games found for “{{ q }}”{% if date_from or date_to %} in those dates{% endif %}. Try the full team name, or widen the dates.</p>
+{% endif %}
+{% else %}
+<p class="lede" style="margin-top:0">Search for a team, then set the price you'd pay. One watch covers every game in your date range.</p>
+{% endif %}
+{% endblock %}

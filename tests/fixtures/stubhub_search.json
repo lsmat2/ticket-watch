@@ -1,0 +1,32 @@
+{
+  "total_items": 2,
+  "page": 1,
+  "page_size": 100,
+  "_links": {},
+  "_embedded": {
+    "items": [
+      {
+        "id": 153000111,
+        "name": "New York Knicks vs Boston Celtics",
+        "start_date": "2026-11-14T19:30:00-05:00",
+        "status": "Active",
+        "min_ticket_price": {"amount": 61.5, "currency_code": "USD", "display": "$61.50"},
+        "_links": {
+          "self": {"href": "https://api.stubhub.net/catalog/events/153000111"},
+          "event:webpage": {"href": "https://www.stubhub.com/new-york-knicks-tickets/event/153000111/"}
+        },
+        "_embedded": {
+          "venue": {"id": 5000, "name": "Madison Square Garden", "city": "New York"}
+        }
+      },
+      {
+        "id": 153000999,
+        "name": "New York Knicks vs Miami Heat",
+        "start_date": "2027-02-01T19:30:00-05:00",
+        "min_ticket_price": {"amount": 40, "currency_code": "USD", "display": "$40.00"},
+        "_links": {"event:webpage": {"href": "https://www.stubhub.com/event/153000999/"}},
+        "_embedded": {"venue": {"id": 5000, "name": "Madison Square Garden", "city": "New York"}}
+      }
+    ]
+  }
+}

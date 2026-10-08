@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; align-items:end; justify-content:space-between; gap:12px; flex-wrap:wrap">
+  <h1>Your watches</h1>
+  <div style="display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap">
+    <form class="inline" method="post" action="/test-notification"><button class="btn">Send test alert</button></form>
+    <form class="inline" method="post" action="/check"><button class="btn primary">Check prices now</button></form>
+  </div>
+</div>
+<p class="lede">
+  {% if last_cycle %}Last checked at {{ last_cycle|clock }}. {% else %}First check is running. {% endif %}
+  Prices are checked every {{ poll_minutes }} minutes, and you get one alert when a game hits your price.
+</p>
+
+{% if notice %}<p class="note">{{ notice }}</p>{% endif %}
+{% for name, s in statuses.items() if s.consecutive_failures %}
+<p class="note problem"><strong>{{ labels.get(name, name) }} isn't responding</strong> ({{ s.consecutive_failures }} failed checks). {{ s.last_error }}</p>
+{% endfor %}
+
+{% for w, events in watches %}
+{% set priced = events | selectattr('price', 'ne', none) | list %}
+<article class="ticket {{ 'paused' if not w.active }} {{ 'fresh' if loop.last and notice and 'added' in notice }}">
+  <div class="ticket-body">
+    <h2 style="font:700 32px/1 var(--display); margin:0 0 6px">{{ w.query }}</h2>
+    <p style="margin:0 0 16px; color:var(--ink-soft)">
+      {%- if w.date_from and w.date_to and w.date_from == w.date_to %}{{ w.date_from|shortdate }}
+      {%- elif w.date_from or w.date_to %}{{ w.date_from|shortdate if w.date_from else 'Any date' }} to {{ w.date_to|shortdate if w.date_to else 'end of season' }}
+      {%- else %}Every upcoming game{% endif %}{% if w.home_only %}, home games only{% endif %}{% if w.venue_name %}, at {{ w.venue_name }}{% endif %}{% if not w.active %}. Paused.{% endif %}
+    </p>
+
+    {% if events %}
+    <div class="scroll"><table class="games">
+      {% for e in events[:8] %}
+      <tr>
+        <td><div class="date"><span class="d">{{ e.starts_at|day }}</span><span class="m">{{ e.starts_at|mon }}</span><span class="w">{{ e.starts_at|dow }} {{ e.starts_at|clock }}</span></div></td>
+        <td><div class="matchup">{{ e.title }}</div><div class="venue">{{ e.venue_name }}</div></td>
+        {% if e.price is not none %}
+        <td class="price {{ 'under' if e.price <= w.target_price }}">
+          <a href="{{ e.url }}" target="_blank" rel="noopener">${{ '%.0f'|format(e.price) }}</a>
+          <span class="via">{{ labels.get(e.provider, e.provider) }}</span>
+          {% if e.alerted_price is not none %}<span class="stamp">Alert sent</span>{% endif %}
+        </td>
+        {% else %}
+        <td class="price none"><a href="{{ e.url }}" target="_blank" rel="noopener">No price yet</a><span class="via">{{ labels.get(e.provider, e.provider) }}</span></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </table></div>
+    {% if events|length > 8 %}<p class="empty">And {{ events|length - 8 }} more games.</p>{% endif %}
+    {% if not priced %}<p class="empty">None of these games have prices yet, so this watch can't send alerts until a marketplace shares them.</p>{% endif %}
+    {% else %}
+    <p class="empty">No matching games found yet. New games are picked up automatically when they're announced.</p>
+    {% endif %}
+  </div>
+
+  <aside class="ticket-stub" aria-label="Target price">
+    <div>
+      <div class="stub-caption">Alert me at or below</div>
+      <div class="stub-price">${{ '%.0f'|format(w.target_price) }}</div>
+      <div class="stub-qty">{{ w.quantity }} ticket{{ '' if w.quantity == 1 else 's' }}</div>
+    </div>
+    <div class="stub-actions">
+      <form class="inline" method="post" action="/watches/{{ w.id }}/toggle"><button class="btn quiet">{{ 'Pause' if w.active else 'Resume' }}</button></form>
+      <form class="inline" method="post" action="/watches/{{ w.id }}/delete"><button class="btn quiet">Delete</button></form>
+    </div>
+  </aside>
+</article>
+{% else %}
+<article class="ticket">
+  <div class="ticket-body">
+    <h2 style="font:700 32px/1 var(--display); margin:0 0 8px">No watches yet</h2>
+    <p style="margin:0 0 18px; color:var(--ink-soft); max-width:52ch">Pick a team and a price. We'll check every marketplace you've connected and send an alert to your phone when tickets drop to it.</p>
+    <a class="btn primary" href="/search" style="text-decoration:none; display:inline-block">Find games</a>
+  </div>
+  <aside class="ticket-stub"><div><div class="stub-caption">Alert me at or below</div><div class="stub-price" style="color:var(--perf)">$—</div></div></aside>
+</article>
+{% endfor %}
+{% endblock %}

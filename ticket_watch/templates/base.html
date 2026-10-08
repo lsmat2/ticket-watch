@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Ticket Watch{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #e9edf2;      /* page */
+    --stock: #ffffff;      /* ticket surface */
+    --ink: #1c2536;
+    --ink-soft: #5a6577;
+    --rule: #d3d9e2;
+    --perf: #b9c2cf;
+    --arena: #2346c8;
+    --arena-ink: #ffffff;
+    --turf: #0b7a55;
+    --turf-wash: #e2f3ec;
+    --brick: #b23a22;
+    --brick-wash: #fbebe6;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "Barlow", system-ui, sans-serif;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #121a29; --stock: #1b2538; --ink: #e6ebf3; --ink-soft: #97a3b6;
+      --rule: #2b3750; --perf: #3a4864; --arena: #6f8cff; --arena-ink: #0f1626;
+      --turf: #43c393; --turf-wash: #15332b; --brick: #ff8a70; --brick-wash: #3a211c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #121a29; --stock: #1b2538; --ink: #e6ebf3; --ink-soft: #97a3b6;
+    --rule: #2b3750; --perf: #3a4864; --arena: #6f8cff; --arena-ink: #0f1626;
+    --turf: #43c393; --turf-wash: #15332b; --brick: #ff8a70; --brick-wash: #3a211c;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--body); }
+  a { color: var(--arena); text-underline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--arena); outline-offset: 2px; border-radius: 4px; }
+
+  /* ---------- masthead ---------- */
+  .masthead { max-width: 1000px; margin: 0 auto; padding: 22px 16px 8px; display: flex; align-items: baseline; gap: 28px; flex-wrap: wrap; }
+  .wordmark { font: 700 26px/1 var(--display); letter-spacing: .01em; color: var(--ink); text-decoration: none; }
+  .wordmark span { color: var(--arena); }
+  .nav { display: flex; gap: 20px; }
+  .nav a { font: 600 17px/1 var(--display); color: var(--ink-soft); text-decoration: none; padding-bottom: 4px; border-bottom: 2px solid transparent; }
+  .nav a[aria-current="page"] { color: var(--ink); border-color: var(--arena); }
+  .markets { margin-left: auto; display: flex; gap: 14px; font-size: 14px; color: var(--ink-soft); }
+  .market { display: inline-flex; align-items: center; gap: 6px; }
+  .market::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--perf); }
+  .market.on { color: var(--ink); }
+  .market.on::before { background: var(--turf); }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 18px 16px 64px; }
+  h1 { font: 700 clamp(34px, 6vw, 48px)/1 var(--display); margin: 10px 0 22px; letter-spacing: -.005em; }
+  .lede { color: var(--ink-soft); margin: -12px 0 24px; max-width: 60ch; }
+
+  /* ---------- notices ---------- */
+  .note { padding: 12px 16px; border-radius: 10px; margin: 0 0 18px; max-width: 72ch; background: var(--stock); border-left: 4px solid var(--arena); }
+  .note.problem { border-left-color: var(--brick); background: var(--brick-wash); }
+  .note strong { font-weight: 600; }
+
+  /* ---------- controls ---------- */
+  label.field { display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 500; color: var(--ink-soft); }
+  input[type=text], input[type=number], input[type=date], input:not([type]) {
+    font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 9px 11px; min-width: 0;
+  }
+  input:focus-visible { outline-offset: 0; }
+  .check { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; padding-bottom: 9px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--arena); }
+  .btn { font: 600 15px/1 var(--body); padding: 11px 16px; border-radius: 8px; border: 1px solid var(--rule); background: var(--stock); color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .btn:hover { border-color: var(--ink-soft); }
+  .btn.primary { background: var(--arena); border-color: var(--arena); color: var(--arena-ink); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.quiet { background: transparent; border-color: transparent; color: var(--ink-soft); padding: 8px 10px; }
+  .btn.quiet:hover { color: var(--ink); border-color: var(--rule); }
+  form.inline { display: inline; margin: 0; }
+
+  /* ---------- the ticket ---------- */
+  .ticket { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 200px; background: var(--stock); border-radius: var(--radius); margin-bottom: 22px; }
+  .ticket-body { padding: 22px 24px; min-width: 0; }
+  .ticket-stub { position: relative; border-left: 2px dashed var(--perf); padding: 22px 18px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 14px; text-align: center; }
+  /* punched notches at either end of the perforation */
+  .ticket-stub::before, .ticket-stub::after { content: ""; position: absolute; left: -12px; width: 22px; height: 22px; border-radius: 50%; background: var(--paper); }
+  .ticket-stub::before { top: -11px; }
+  .ticket-stub::after { bottom: -11px; }
+  .ticket.paused .ticket-body, .ticket.paused .stub-price { opacity: .55; }
+
+  .stub-caption { font-size: 13px; color: var(--ink-soft); line-height: 1.3; }
+  .stub-price { font: 700 56px/1 var(--display); letter-spacing: -.01em; margin: 4px 0 6px; }
+  .stub-qty { font: 600 17px/1 var(--display); color: var(--ink-soft); }
+  .stub-actions { display: flex; gap: 4px; }
+
+
+  /* ---------- game rows ---------- */
+  .games { width: 100%; border-collapse: collapse; }
+  .games td { padding: 12px 10px; border-top: 1px solid var(--rule); vertical-align: middle; }
+  .games tr:first-child td { border-top: 0; }
+  .games td:first-child { padding-left: 0; }
+  .games td:last-child { padding-right: 0; }
+  .date { display: grid; grid-template-columns: 42px auto; column-gap: 8px; align-items: center; width: 116px; }
+  .date .d { grid-row: span 2; font: 700 34px/0.9 var(--display); text-align: right; }
+  .date .w { white-space: nowrap; }
+  .date .m { font: 600 15px/1.1 var(--display); }
+  .date .w { font-size: 13px; color: var(--ink-soft); line-height: 1.1; }
+  .matchup { font-weight: 600; line-height: 1.3; }
+  .venue { font-size: 14px; color: var(--ink-soft); }
+  .price { font: 600 22px/1 var(--display); white-space: nowrap; text-align: right; }
+  .price a { color: inherit; text-decoration: none; }
+  .price a:hover { text-decoration: underline; }
+  .price .via { display: block; font: 400 13px/1.4 var(--body); color: var(--ink-soft); }
+  .price.none { font: 400 14px/1.3 var(--body); color: var(--ink-soft); }
+  .under { color: var(--turf); }
+  .stamp { display: inline-block; font: 700 13px/1 var(--display); color: var(--turf); background: var(--turf-wash); border: 1.5px solid var(--turf); border-radius: 4px; padding: 3px 6px; transform: rotate(-3deg); margin-top: 4px; }
+  .scroll { overflow-x: auto; }
+  .empty { color: var(--ink-soft); margin: 4px 0 0; }
+
+  /* ---------- small screens (kept last so it overrides the rules above) ---------- */
+  @media (max-width: 640px) {
+    .masthead { gap: 14px 22px; }
+    .markets { margin-left: 0; width: 100%; flex-wrap: wrap; }
+    .ticket { grid-template-columns: minmax(0, 1fr); }
+    .ticket-body { padding: 18px 16px; }
+    /* stack each game: date beside the matchup, price and actions underneath */
+    .games, .games tbody { display: block; }
+    .games tr { display: grid; grid-template-columns: 112px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; padding: 12px 0; border-top: 1px solid var(--rule); }
+    .games tr:first-child { border-top: 0; }
+    .games td { display: block; padding: 0; border: 0; }
+    .games td.price { grid-column: 2; text-align: left; }
+    .games td.price .via { display: inline; margin-left: 6px; }
+    .games td.row-action { grid-column: 1 / -1; width: auto !important; }
+    .games td.row-action form { justify-content: flex-start !important; }
+    .date { width: 112px; }
+    .ticket-stub { border-left: 0; border-top: 2px dashed var(--perf); flex-direction: row; text-align: left; flex-wrap: wrap; }
+    .ticket-stub::before, .ticket-stub::after { top: -12px; left: auto; bottom: auto; }
+    .ticket-stub::before { left: -11px; }
+    .ticket-stub::after { right: -11px; }
+    .stub-price { font-size: 44px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ticket.fresh { animation: print .5s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes print { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <a class="wordmark" href="/">Ticket<span>Watch</span></a>
+  <nav class="nav" aria-label="Main">
+    <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Watches</a>
+    <a href="/search" {% if request.url.path == '/search' %}aria-current="page"{% endif %}>Find games</a>
+  </nav>
+  <div class="markets" aria-label="Marketplaces">
+    {% for m in markets %}<span class="market {{ 'on' if m.connected }}" title="{{ 'Connected' if m.connected else 'Not connected' }}">{{ m.label }}</span>{% endfor %}
+  </div>
+</header>
+<main>
+{% if not ntfy_on %}<p class="note problem"><strong>Phone alerts are off.</strong> Set NTFY_TOPIC in .env and restart; until then alerts only appear in the server log.</p>{% endif %}
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,27 @@
+[project]
+name = "ticket-watch"
+version = "0.1.0"
+description = "Price alerts for StubHub, SeatGeek and friends, pushed to your phone via ntfy."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    "apscheduler>=3.10,<4",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "respx>=0.21"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ticket_watch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

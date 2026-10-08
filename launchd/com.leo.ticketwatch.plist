@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.leo.ticketwatch</string>
+  <key>WorkingDirectory</key><string>/Users/leo/ticket-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/leo/.local/bin/uv</string>
+    <string>run</string>
+    <string>uvicorn</string>
+    <string>ticket_watch.app:app</string>
+    <string>--host</string><string>127.0.0.1</string>
+    <string>--port</string><string>8765</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/leo/ticket-watch/logs/ticketwatch.log</string>
+  <key>StandardErrorPath</key><string>/Users/leo/ticket-watch/logs/ticketwatch.log</string>
+</dict>
+</plist>

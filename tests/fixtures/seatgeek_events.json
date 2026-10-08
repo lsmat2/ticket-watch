@@ -1,0 +1,31 @@
+{
+  "events": [
+    {
+      "id": 6123456,
+      "title": "Boston Celtics at New York Knicks",
+      "short_title": "Celtics at Knicks",
+      "datetime_local": "2026-11-14T19:30:00",
+      "datetime_utc": "2026-11-15T00:30:00",
+      "url": "https://seatgeek.com/celtics-at-knicks-tickets/nba/2026-11-14-7-30-pm/6123456",
+      "venue": {"id": 1876, "name": "Madison Square Garden", "city": "New York"},
+      "performers": [
+        {"name": "New York Knicks", "slug": "new-york-knicks", "home_venue_id": 1876, "primary": true},
+        {"name": "Boston Celtics", "slug": "boston-celtics", "home_venue_id": 1950}
+      ],
+      "stats": {"lowest_price": 54, "average_price": 140, "listing_count": 812}
+    },
+    {
+      "id": 6123999,
+      "title": "New York Knicks at Brooklyn Nets",
+      "datetime_local": "2026-11-20T19:00:00",
+      "url": "https://seatgeek.com/knicks-at-nets-tickets/6123999",
+      "venue": {"id": 2210, "name": "Barclays Center", "city": "Brooklyn"},
+      "performers": [
+        {"name": "Brooklyn Nets", "home_venue_id": 2210},
+        {"name": "New York Knicks", "home_venue_id": 1876}
+      ],
+      "stats": {"lowest_price": null}
+    }
+  ],
+  "meta": {"total": 2, "page": 1, "per_page": 100}
+}
