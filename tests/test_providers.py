@@ -25,8 +25,10 @@ def test_seatgeek_parses_events_and_sends_filters():
     )
     events = SeatGeekProvider("cid").search_events("Knicks", date(2026, 11, 1), date(2026, 11, 30))
 
-    params = route.calls.last.request.url.params
-    assert params["client_id"] == "cid"
+    request = route.calls.last.request
+    params = request.url.params
+    assert "client_id" not in params and "client_secret" not in params
+    assert request.headers["authorization"].startswith("Basic ")
     assert params["q"] == "Knicks"
     assert params["datetime_local.gte"] == "2026-11-01"
     assert params["datetime_local.lt"] == "2026-12-01"
@@ -79,3 +81,16 @@ def test_stubhub_sandbox_uses_sandbox_host():
     )
     assert StubHubProvider("id", "s", sandbox=True).search_events("x") == []
     assert route.called
+
+
+@respx.mock
+def test_errors_never_include_credentials():
+    respx.get("https://api.seatgeek.com/2/events").mock(return_value=httpx.Response(500))
+    with pytest.raises(ProviderError) as err:
+        SeatGeekProvider("CID123", "SECRET456").search_events("Knicks")
+    assert str(err.value) == "SeatGeek search failed: HTTP 500"
+
+    respx.post(TOKEN_URL).mock(return_value=httpx.Response(401))
+    with pytest.raises(ProviderError) as err:
+        StubHubProvider("ID789", "SECRET000").search_events("Knicks")
+    assert "SECRET000" not in str(err.value) and "ID789" not in str(err.value)

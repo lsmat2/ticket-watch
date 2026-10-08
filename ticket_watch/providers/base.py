@@ -3,11 +3,28 @@ from __future__ import annotations
 from datetime import date
 from typing import Protocol
 
+import httpx
+
 from ticket_watch.models import Event
 
 
 class ProviderError(Exception):
     """A provider call failed (network, auth, bad response)."""
+
+
+def describe_http_error(exc: Exception) -> str:
+    """Short, URL-free description of a failed request.
+
+    httpx's own messages include the full request URL. That can carry credentials, and these
+    messages end up in logs, the db, the UI and push notifications.
+    """
+    if isinstance(exc, httpx.HTTPStatusError):
+        return f"HTTP {exc.response.status_code}"
+    if isinstance(exc, httpx.TimeoutException):
+        return "request timed out"
+    if isinstance(exc, httpx.HTTPError):
+        return f"network error ({type(exc).__name__})"
+    return "invalid response"
 
 
 class TicketProvider(Protocol):

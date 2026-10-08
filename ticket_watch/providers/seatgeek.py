@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 import httpx
 
 from ticket_watch.models import Event
-from ticket_watch.providers.base import ProviderError
+from ticket_watch.providers.base import ProviderError, describe_http_error
 
 BASE_URL = "https://api.seatgeek.com/2"
 
@@ -19,26 +19,25 @@ class SeatGeekProvider:
     supports_quantity = False
 
     def __init__(self, client_id: str, client_secret: str | None = None, http: httpx.Client | None = None):
-        self._auth = {"client_id": client_id}
-        if client_secret:
-            self._auth["client_secret"] = client_secret
+        # Basic Auth keeps credentials out of URLs (and so out of logs and error messages).
+        self._auth = (client_id, client_secret or "")
         self._http = http or httpx.Client(timeout=15)
 
     def search_events(
         self, query: str, date_from: date | None = None, date_to: date | None = None, quantity: int = 1
     ) -> list[Event]:
-        params: dict[str, str | int] = {**self._auth, "q": query, "per_page": 100, "sort": "datetime_local.asc"}
+        params: dict[str, str | int] = {"q": query, "per_page": 100, "sort": "datetime_local.asc"}
         if date_from:
             params["datetime_local.gte"] = date_from.isoformat()
         if date_to:
             # lte on a bare date means midnight; include the whole last day.
             params["datetime_local.lt"] = (date_to + timedelta(days=1)).isoformat()
         try:
-            resp = self._http.get(f"{BASE_URL}/events", params=params)
+            resp = self._http.get(f"{BASE_URL}/events", params=params, auth=self._auth)
             resp.raise_for_status()
             payload = resp.json()
         except (httpx.HTTPError, ValueError) as exc:
-            raise ProviderError(f"SeatGeek search failed: {exc}") from exc
+            raise ProviderError(f"SeatGeek search failed: {describe_http_error(exc)}") from exc
         return [self._parse(e) for e in payload.get("events", [])]
 
     def _parse(self, e: dict) -> Event:

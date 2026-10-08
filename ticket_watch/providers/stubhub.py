@@ -6,7 +6,7 @@ from datetime import date, datetime
 import httpx
 
 from ticket_watch.models import Event
-from ticket_watch.providers.base import ProviderError
+from ticket_watch.providers.base import ProviderError, describe_http_error
 
 TOKEN_URL = "https://account.stubhub.com/oauth2/token"
 API_URL = "https://api.stubhub.net"
@@ -46,7 +46,7 @@ class StubHubProvider:
             resp.raise_for_status()
             body = resp.json()
         except (httpx.HTTPError, ValueError) as exc:
-            raise ProviderError(f"StubHub auth failed: {exc}") from exc
+            raise ProviderError(f"StubHub auth failed: {describe_http_error(exc)}") from exc
         self._token = body["access_token"]
         self._token_expires_at = time.time() + float(body.get("expires_in", 3600))
         return self._token
@@ -68,7 +68,7 @@ class StubHubProvider:
             resp.raise_for_status()
             payload = resp.json()
         except (httpx.HTTPError, ValueError) as exc:
-            raise ProviderError(f"StubHub search failed: {exc}") from exc
+            raise ProviderError(f"StubHub search failed: {describe_http_error(exc)}") from exc
         events = [self._parse(e) for e in (payload.get("_embedded") or {}).get("items", [])]
         return [
             ev

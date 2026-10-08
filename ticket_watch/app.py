@@ -11,7 +11,7 @@ from urllib.parse import quote
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from ticket_watch.db import Database
@@ -26,6 +26,8 @@ ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("ticket_watch")
+# httpx logs every request URL at INFO; keep URLs (and anything in them) out of the log.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 class LogNotifier:
@@ -72,6 +74,21 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.middleware("http")
+async def same_origin_posts_only(request: Request, call_next):
+    """CSRF guard: any website you visit could otherwise POST forms to this localhost app.
+
+    Browsers always send Origin on cross-site form posts, so reject posts whose Origin (or Referer,
+    as a fallback) isn't this app.
+    """
+    if request.method not in ("GET", "HEAD", "OPTIONS"):
+        source = request.headers.get("origin") or request.headers.get("referer")
+        own = f"{request.url.scheme}://{request.url.netloc}"
+        if not source or not (source == own or source.startswith(own + "/")):
+            return PlainTextResponse("Cross-origin request blocked", status_code=403)
+    return await call_next(request)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 
